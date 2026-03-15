@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d102f038a1f6d1e4e888f8057ac4b9c1
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - SpeedBoost: {fileID: 4055661613035934925, guid: 34040878fbfe11a49b999f719d23d076, type: 3}
+  - ScoreBoost: {fileID: 2947582090764739478, guid: 9e9b7c08e4ef3fb4fa5745b516328a5d, type: 3}
+  - JumpBoost: {fileID: 8126056728300615312, guid: 6b2627a5cee75bc41a34470264c5daea, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
