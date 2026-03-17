@@ -23,7 +23,7 @@ public class PickUp : MonoBehaviour
     void Update()
     {
 
-        transform.Rotate(new Vector3(0, 1, 0));
+     //   transform.Rotate(new Vector3(0, 1, 0));
     }
 
 

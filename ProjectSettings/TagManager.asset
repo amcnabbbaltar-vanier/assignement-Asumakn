@@ -10,6 +10,7 @@ TagManager:
   - ScoreBoost
   - Trap
   - EndPoint
+  - Floor
   layers:
   - Default
   - TransparentFX

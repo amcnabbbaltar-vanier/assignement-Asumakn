@@ -12,6 +12,8 @@ public class SpawnPickUp : MonoBehaviour
 
     GameObject newPickup;
 
+    public int difficulty = 1;
+
     float timer = 0;
 
     MeshRenderer renderer;
@@ -32,10 +34,16 @@ public class SpawnPickUp : MonoBehaviour
         {
 
 
-                SpawnJumpBoost();
+for (int i = 0; i < 2; i++)
+{
+                    SpawnJumpBoost();
                 SpawnSpeedBoost();
                 SpawnScoreBoost();
-                SpawnTrap();
+}
+               for (int i = 0; i < difficulty; i++)
+               {
+                 SpawnTrap();
+               }
 
             timer = 0;
         }

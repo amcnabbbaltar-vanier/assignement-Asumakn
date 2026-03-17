@@ -7,9 +7,8 @@ using UnityEngine.SceneManagement;
 public class CharacterMovement : MonoBehaviour
 {
     Rigidbody rb;
-    Animator anim;
     float speed = 0f;
-    float jumpForce = 100f;
+    float jumpForce ;
     bool jump = false;
 
     bool isSpeedBoost = false;
@@ -18,28 +17,31 @@ public class CharacterMovement : MonoBehaviour
 
     bool isJumpBoost = false;
 
-    float JumpTimer = 0;
+
+    int jumpCount = 0;
 
     public float bonusSpeed = 3;
 
     public ParticleSystem particlePrefab;
 
-    float PlayerTurn = 0;
 
     ParticleSystem ps;
     public GameObject PlayerCamera;
 
-    MenuOptions menu = new MenuOptions();
+    MenuOptions menu;
 
     Camera cam;
 
     Vector3 SpawnPoint;
 
+    bool moving = false;
+
+    float motion;
+
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        anim = GetComponent<Animator>();
         ps = GetComponent<ParticleSystem>();
         cam = PlayerCamera.GetComponent<Camera>();
         ps.Stop();
@@ -51,16 +53,23 @@ public class CharacterMovement : MonoBehaviour
     void Update()
     {
 
+      
         if (transform.position.y < -80)
         {
             Respawn();
         }
+
         GameManager.timer += Time.deltaTime;
+
         PlayerSpeed();
-        JumpBoost();
         PlayerMovement();
+        JumpBoost();
+        TurnPlayer();
 
-
+        if (jumpCount == 2)
+        {
+            Invoke(nameof(ResetJump), 1.5f);
+        }
     }
 
     void FixedUpdate()
@@ -68,28 +77,7 @@ public class CharacterMovement : MonoBehaviour
 
         if (jump)
         {
-
-            if (anim.GetBool("isGrounded") == false)
-            {
-                if (anim.GetBool("doubleJump"))
-                {
-                    anim.SetBool("doubleJump", false);
-                }
-                else
-                {
-                    anim.SetBool("doubleJump", true);
-                    Jump();
-
-                }
-            }
-            else
-            {
-                Jump();
-                anim.SetBool("isGrounded", false);
-
-            }
-
-
+            Jump();
         }
 
 
@@ -106,12 +94,14 @@ public class CharacterMovement : MonoBehaviour
             isJumpBoost = true;
             Destroy(other.gameObject);
         }
+
         if (other.CompareTag("SpeedBoost"))
         {
 
             ps.Play();
             Destroy(other.gameObject);
         }
+
         if (other.CompareTag("ScoreBoost"))
         {
             GameManager.incrementScore(50);
@@ -135,7 +125,13 @@ public class CharacterMovement : MonoBehaviour
 
     void Jump()
     {
-        rb.velocity += Vector3.up * jumpForce;
+        if (jumpCount < 2)
+        {
+            rb.velocity += Vector3.up * jumpForce;
+            jumpCount++;
+        }
+
+
         jump = false;
     }
 
@@ -146,30 +142,45 @@ public class CharacterMovement : MonoBehaviour
     void PlayerMovement()
     {
 
-
-        Vector3 turn = new Vector3(0, Input.GetAxis("Horizontal"), 0);
-
-        transform.Rotate(turn);
-
-        rb.rotation.Set(0, transform.rotation.y, 0, 0);
-
-        if (rb.velocity.y == 0)
-        {
-            anim.SetBool("isGrounded", true);
-            anim.SetBool("doubleJump", false);
-        }
-
-        anim.SetFloat("playerSpeed", speed);
-
         Vector3 orientation = cam.transform.forward;
-
         orientation.y = 0;
 
-        rb.velocity += orientation * speed * Input.GetAxis("Vertical") * Time.deltaTime;
+        motion = rb.velocity.x + rb.velocity.z;
 
-        if (Input.GetAxis("Vertical") == 0)
+        if (motion < 0)
         {
-            rb.velocity = new Vector3(0, rb.velocity.y, 0);
+            motion *= -1;
+        }
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            if (motion < 15)
+            {
+                rb.velocity += orientation * speed * Input.GetAxis("Vertical") * Time.deltaTime;
+
+            }
+        }
+        else
+        {
+            if (motion < 10)
+            {
+                rb.velocity += orientation * speed * Input.GetAxis("Vertical") * Time.deltaTime;
+
+            }
+        }
+
+        if (Input.GetAxis("Vertical") != 0)
+        {
+            moving = true;
+        }
+        else
+        {
+            moving = false;
+        }
+
+
+        if (Input.GetAxis("Vertical") == 0 && rb.velocity.y == 0)
+        {
+            rb.velocity = Vector3.zero;
         }
 
         if (Input.GetButtonDown("Jump"))
@@ -182,72 +193,46 @@ public class CharacterMovement : MonoBehaviour
     void PlayerSpeed()
     {
 
-
-        if (isSpeedBoost)
+        if (moving)
         {
-
-            speedTimer += Time.deltaTime;
-
-            if (speedTimer < 10)
-            {
-                if ((Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0) && Input.GetKey(KeyCode.LeftShift))
-                {
-                    speed = 20.2f + bonusSpeed;
-                }
-                else if (Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0)
-                {
-                    speed = 15.2f + bonusSpeed;
-                }
-                else
-                {
-                    speed = 0;
-                }
-            }
-            else
-            {
-                speedTimer = 0;
-                isSpeedBoost = false;
-                ps.Stop();
-            }
-
+            speed = 15.2f;
         }
         else
         {
+            speed = 0;
+        }
+
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            speed += 5;
+        }
 
 
-            if ((Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0) && Input.GetKey(KeyCode.LeftShift))
+        if (isSpeedBoost)
+        {
+            speed += 5;
+            speedTimer += Time.deltaTime;
+
+            if (speedTimer > 5)
             {
-                speed = 20.2f;
-            }
-            else if (Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0)
-            {
-                speed = 15.2f;
-            }
-            else
-            {
-                speed = 0;
+                ps.Stop();
+                isSpeedBoost = false;
             }
         }
+
 
     }
 
     void JumpBoost()
     {
+
+        jumpForce = 5f;
+
         if (isJumpBoost)
         {
-            jumpForce = 15f;
-        }
-        else
-        {
-            jumpForce = 10f;
+            jumpForce += 5;
         }
 
-        JumpTimer += Time.deltaTime;
-
-        if (JumpTimer > 30)
-        {
-            isJumpBoost = false;
-        }
     }
 
 
@@ -256,5 +241,20 @@ public class CharacterMovement : MonoBehaviour
         transform.position = SpawnPoint;
         rb.velocity = Vector3.zero;
         GameManager.DamagePlayer();
+    }
+
+    void ResetJump()
+    {
+        jumpCount = 0;
+    }
+
+
+    void TurnPlayer()
+    {
+        Vector3 turn = new Vector3(0, Input.GetAxis("Horizontal"), 0);
+
+        transform.Rotate(turn);
+
+         rb.rotation.Set(0, transform.rotation.y, 0, 0);
     }
 }
